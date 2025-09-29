@@ -32,10 +32,17 @@
   }
   #letters {
     font-size: 2em;
-    margin: 15px auto;
+    margin: 15px auto 5px auto;
     width: 90%;
     max-width: 400px;
     word-wrap: break-word;
+  }
+  #eligibleCount {
+    font-size: 0.9em;
+    color: #555;
+    margin: 5px auto 10px auto;
+    width: 90%;
+    max-width: 400px;
   }
   input[type=text] {
     padding: 10px;
@@ -78,9 +85,11 @@
 <h1>Threvity</h1>
 <div id="history"></div>
 <div id="letters"></div>
+<div id="eligibleCount"></div>
 <input type="text" id="wordInput" placeholder="Enter word" />
 <div id="submitRow">
   <button id="submitBtn">Submit</button>
+</div>
 <div id="buttonRow">
   <button id="undoBtn">Undo</button>
   <button id="quitBtn">Give Up</button>
@@ -97,9 +106,7 @@ fetch('EngDictEdit2.txt')
     allWords = text.split(/\r?\n/).map(w => w.trim().toLowerCase()).filter(Boolean);
     newGame();
   })
-  .catch(err => {
-    console.error('Failed to load dictionary:', err);
-  });
+  .catch(err => console.error('Failed to load dictionary:', err));
 
 let seed = "";
 let eligWords = [];
@@ -168,6 +175,8 @@ function displayLetters(){
   }
   if(spaces.includes(currentWord.length)) out += "__";
   document.getElementById("letters").textContent = out;
+  document.getElementById("eligibleCount").textContent = 
+    `Eligible words remaining: ${eligWords.length}`;
 }
 
 function updateHistory(){
@@ -193,6 +202,7 @@ function endGame(){
   info += `<p>Highest score path (${optimalPath.length-1}): ${optimalPath.join(" → ").toUpperCase()}</p>`;
   info += `<p>Longest word from original seed was: ${longestSeedWord.toUpperCase()}</p>`;
   document.getElementById("endInfo").innerHTML = info;
+  document.getElementById("eligibleCount").textContent = "Eligible words remaining: 0";
 }
 
 function maxWord(words){
@@ -267,5 +277,3 @@ document.getElementById("replayBtn").addEventListener("click", newGame);
 </script>
 </body>
 </html>
-
-
