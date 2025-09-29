@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>Threvity</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 20px;
+  }
+  #history {
+    height: 150px;
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: flex-start;
+    align-items: center;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .history-item {
+    opacity: 0.8;
+    transition: opacity 1s;
+  }
+  #letters {
+    font-size: 2em;
+    margin: 20px;
+  }
+  input[type=text] {
+    padding: 5px;
+    font-size: 1em;
+  }
+  button {
+    margin: 5px;
+    padding: 5px 10px;
+    font-size: 1em;
+  }
+  #endInfo {
+    margin-top: 20px;
+  }
+</style>
+</head>
+<body>
+<h1>Threvity</h1>
+<div id="history"></div>
+<div id="letters"></div>
+<input type="text" id="wordInput" placeholder="Enter word" />
+<button id="submitBtn">Submit</button>
+<button id="undoBtn">Undo</button>
+<button id="quitBtn">Quit</button>
+<button id="replayBtn">Replay</button>
+<div id="message"></div>
+<div id="endInfo"></div>
+<script>
+let allWords = [];
+
+fetch('scrabbledict.txt')
+  .then(response => response.text())
+  .then(text => {
+    allWords = text.split(/\r?\n/).map(w => w.trim().toLowerCase()).filter(Boolean);
+    newGame();
+  })
+  .catch(err => {
+    console.error('Failed to load dictionary:', err);
+  });
+
+let seed = "";
+let eligWords = [];
+let history = [];
+let score = 0;
+let currentWord = "";
+
+function randomSeed(){
+  const three = allWords.filter(w => w.length === 3);
+  return three[Math.floor(Math.random()*three.length)];
+}
+
+function letterCheck(user, letters){
+  let i=0;
+  for(let j=0;j<user.length;j++){
+    if(user[j]===letters[i]) i++;
+    if(i===letters.length) return true;
+  }
+  return false;
+}
+
+function search(pool, letters){
+  return pool.filter(w => letterCheck(w, letters) && w!==letters);
+}
+
+function spaceCheck(word, letters){
+  let spaces=[];
+  let i=0;
+  for(let j=0;j<word.length;j++){
+    if(word[j]===letters[i]){
+      i++;
+    } else {
+      if(!spaces.includes(i)) spaces.push(i);
+    }
+    if(i===letters.length){
+      if(j+1<word.length) spaces.push(i);
+      return spaces;
+    }
+  }
+  return spaces;
+}
+
+function optimal(root, words){
+  let best=[];
+  if(!words.length) return [root];
+  for(let i=0;i<words.length;i++){
+    let branch = optimal(words[i], search(words, words[i]));
+    if(branch.length > best.length){
+      best = branch;
+    }
+  }
+  best.push(root);
+  return best;
+}
+
+function displayLetters(){
+  let spaces=[];
+  eligWords.forEach(w=>{
+    spaces = spaces.concat(spaceCheck(w, currentWord));
+  });
+  spaces = [...new Set(spaces)];
+  let out="";
+  for(let i=0;i<currentWord.length;i++){
+    if(spaces.includes(i)) out += "__";
+    out += currentWord[i].toUpperCase();
+  }
+  if(spaces.includes(currentWord.length)) out += "__";
+  document.getElementById("letters").textContent = out;
+}
+
+function updateHistory(){
+  const container = document.getElementById("history");
+  container.innerHTML = "";
+  let shown = history.slice(0,-1).slice(-5);
+  for(let w of shown.reverse()){
+    const div = document.createElement("div");
+    div.className = "history-item";
+    div.textContent = w.toUpperCase();
+    container.appendChild(div);
+  }
+}
+
+function endGame(){
+  document.getElementById("message").textContent = `Game over. Final Score: ${score}`;
+  // Longest word should be from the original seed
+  const seedWords = search(allWords, seed);
+  const longestSeedWord = maxWord(seedWords);
+  const allPossible = search(allWords, history[history.length-1]);
+  const optimalPath = optimal(seed, seedWords);
+  optimalPath.reverse();
+  let info = `<p>Possible words from last word: ${allPossible.join(", ")}</p>`;
+  info += `<p>Highest score path (${optimalPath.length-1}): ${optimalPath.join(" → ").toUpperCase()}</p>`;
+  info += `<p>Longest word from original seed was: ${longestSeedWord.toUpperCase()}</p>`;
+  document.getElementById("endInfo").innerHTML = info;
+}
+
+function maxWord(words){
+  return words.reduce((a,b)=> a.length>=b.length?a:b, "");
+}
+
+function newGame(){
+  document.getElementById("endInfo").innerHTML = "";
+  seed = randomSeed();
+  eligWords = search(allWords, seed).sort((a,b)=>a.length-b.length);
+  while(!eligWords || eligWords.length<3){
+    seed = randomSeed();
+    eligWords = search(allWords, seed).sort((a,b)=>a.length-b.length);
+  }
+  history = [seed];
+  currentWord = seed;
+  score = 0;
+  updateHistory();
+  displayLetters();
+  document.getElementById("message").textContent = "";
+  document.getElementById("wordInput").value = "";
+}
+
+function checkEnd(){
+  if(eligWords.length === 0){
+    endGame();
+  }
+}
+
+function submitWord(){
+  const input = document.getElementById("wordInput");
+  let w = input.value.trim().toLowerCase();
+  if(!w) return;
+  if(eligWords.includes(w)){
+    history.push(w);
+    currentWord = w;
+    eligWords = search(eligWords, w);
+    score++;
+    document.getElementById("message").textContent = "Good! Score: "+score;
+    input.value = "";
+  } else if(!allWords.includes(w)){
+    document.getElementById("message").textContent = "Not a real word.";
+    input.value = "";
+  } else {
+    document.getElementById("message").textContent = "Not eligible.";
+    input.value = "";
+  }
+  updateHistory();
+  displayLetters();
+  checkEnd();
+}
+
+document.getElementById("submitBtn").addEventListener("click", submitWord);
+document.getElementById("wordInput").addEventListener("keypress", e=>{
+  if(e.key==="Enter") submitWord();
+});
+document.getElementById("undoBtn").addEventListener("click", ()=>{
+  if(history.length>1){
+    history.pop();
+    currentWord = history[history.length-1];
+    eligWords = search(allWords, currentWord);
+    score--;
+    updateHistory();
+    displayLetters();
+  }
+});
+document.getElementById("quitBtn").addEventListener("click", ()=>{
+  endGame();
+  eligWords = [];
+});
+document.getElementById("replayBtn").addEventListener("click", newGame);
+</script>
+</body>
+</html>
