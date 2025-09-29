@@ -45,12 +45,24 @@
     box-sizing: border-box;
   }
   button {
-    margin: 5px 2px;
-    padding: 10px 15px;
+    margin: 5px 0;
+    padding: 10px;
     font-size: 1em;
-    width: 45%;
-    max-width: 190px;
+    width: 90%;
+    max-width: 400px;
     box-sizing: border-box;
+  }
+  #buttonRow {
+    display: flex;
+    justify-content: space-between;
+    width: 90%;
+    max-width: 400px;
+    margin: 10px auto 0 auto;
+  }
+  #buttonRow button {
+    width: 32%;
+    padding: 10px;
+    margin: 0;
   }
   #endInfo {
     margin-top: 20px;
@@ -68,9 +80,11 @@
 <div id="letters"></div>
 <input type="text" id="wordInput" placeholder="Enter word" />
 <button id="submitBtn">Submit</button>
-<button id="undoBtn">Undo</button>
-<button id="quitBtn">Quit</button>
-<button id="replayBtn">Replay</button>
+<div id="buttonRow">
+  <button id="undoBtn">Undo</button>
+  <button id="quitBtn">Quit</button>
+  <button id="replayBtn">Replay</button>
+</div>
 <div id="message"></div>
 <div id="endInfo"></div>
 <script>
