@@ -91,7 +91,7 @@
 <script>
 let allWords = [];
 
-fetch('scrabbledict.txt')
+fetch('engmix.txt')
   .then(response => response.text())
   .then(text => {
     allWords = text.split(/\r?\n/).map(w => w.trim().toLowerCase()).filter(Boolean);
@@ -267,3 +267,4 @@ document.getElementById("replayBtn").addEventListener("click", newGame);
 </script>
 </body>
 </html>
+
