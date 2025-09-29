@@ -91,7 +91,7 @@
 <script>
 let allWords = [];
 
-fetch('engmix.txt')
+fetch('EngDictEdit2.txt')
   .then(response => response.text())
   .then(text => {
     allWords = text.split(/\r?\n/).map(w => w.trim().toLowerCase()).filter(Boolean);
@@ -267,4 +267,5 @@ document.getElementById("replayBtn").addEventListener("click", newGame);
 </script>
 </body>
 </html>
+
 
